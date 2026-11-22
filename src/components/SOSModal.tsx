@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, AccessibilitySettings, ChatMessage } from '../types/chat';
 import {
-  AlertTriangle,
+  AlertCircle,
   X,
   MapPin,
   HeartPulse,
   Flame,
-  Users2,
+  Users,
   Package,
-  CheckCircle,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface SOSModalProps {
@@ -37,13 +37,12 @@ export const SOSModal: React.FC<SOSModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setIsSuccess(false);
-      // Auto fetch GPS location if supported
       if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
         setIsLocating(true);
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             setIsLocating(false);
-            setLocationText(`GPS: Lat ${pos.coords.latitude.toFixed(4)}, Lng ${pos.coords.longitude.toFixed(4)} (${currentUser.location || 'Local Area'})`);
+            setLocationText(`Lat ${pos.coords.latitude.toFixed(4)}, Lng ${pos.coords.longitude.toFixed(4)} (${currentUser.location || 'Local Area'})`);
           },
           () => {
             setIsLocating(false);
@@ -61,12 +60,12 @@ export const SOSModal: React.FC<SOSModalProps> = ({
 
     const emergencyTitle =
       emergencyType === 'medical'
-        ? 'CRITICAL MEDICAL EMERGENCY'
+        ? 'MEDICAL EMERGENCY'
         : emergencyType === 'rescue'
-        ? 'URGENT RESCUE / HAZARD'
+        ? 'RESCUE / HAZARD'
         : emergencyType === 'elderly'
-        ? 'ELDERLY ASSISTANCE REQUIRED'
-        : 'EMERGENCY SUPPLIES / RATION';
+        ? 'ELDERLY ASSISTANCE'
+        : 'EMERGENCY SUPPLIES';
 
     const sosMsg: ChatMessage = {
       id: `sos_${Date.now()}`,
@@ -75,8 +74,8 @@ export const SOSModal: React.FC<SOSModalProps> = ({
       senderName: currentUser.name,
       senderRole: currentUser.role,
       senderAvatar: currentUser.avatarUrl,
-      content: `🚨 [${emergencyTitle}] Reported by ${currentUser.name}.\nLocation: ${locationText}\nNotes: ${
-        details || 'Immediate volunteer / first responder dispatch requested.'
+      content: `[${emergencyTitle}] Reported by ${currentUser.name}.\nLocation: ${locationText}\nNotes: ${
+        details || 'Immediate responder assistance requested.'
       }`,
       timestamp: Date.now(),
       isUrgent: true,
@@ -93,56 +92,47 @@ export const SOSModal: React.FC<SOSModalProps> = ({
 
     setTimeout(() => {
       onClose();
-    }, 1400);
+    }, 1200);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div
-        className={`w-full max-w-lg rounded-2xl border shadow-2xl overflow-hidden transition-all ${
-          accessibility.highContrast
-            ? 'bg-black text-yellow-400 border-yellow-400'
-            : 'bg-white text-slate-900 border-slate-200'
-        }`}
-      >
-        {/* Modal Header */}
-        <div className="bg-rose-600 text-white p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle className="w-6 h-6 animate-bounce" />
-            <div>
-              <h3 className="font-bold text-base tracking-wide">BROADCAST EMERGENCY SOS</h3>
-              <p className="text-xs text-rose-100">Dispatches instantly to Nexconn Emergency Channels</p>
-            </div>
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-xl bg-white border border-slate-200 shadow-xl overflow-hidden">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <h3 className="font-semibold text-sm text-slate-900">Emergency Assistance Request</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-rose-700 text-white transition-colors"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {isSuccess ? (
-          <div className="p-8 text-center space-y-3">
-            <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto animate-bounce" />
-            <h4 className="text-xl font-bold text-emerald-600">Emergency Alert Broadcasted!</h4>
+          <div className="p-8 text-center space-y-2">
+            <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+            <h4 className="font-semibold text-sm text-slate-900">Emergency Request Dispatched</h4>
             <p className="text-xs text-slate-500">
-              Your SOS notification has been prioritized and dispatched to on-duty volunteers and medical officers.
+              Your request has been routed to the emergency response team.
             </p>
           </div>
         ) : (
-          <form onSubmit={handleBroadcast} className="p-5 space-y-4">
+          <form onSubmit={handleBroadcast} className="p-4 space-y-4">
             {/* Category selection */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-500">
-                1. Select Emergency Type
+              <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                Request Type
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 {[
-                  { id: 'medical', label: 'Medical Distress', icon: HeartPulse, color: 'text-rose-600' },
-                  { id: 'rescue', label: 'Hazard / Rescue', icon: Flame, color: 'text-amber-600' },
-                  { id: 'elderly', label: 'Elder Assistance', icon: Users2, color: 'text-blue-600' },
-                  { id: 'supplies', label: 'Food / Oxygen', icon: Package, color: 'text-emerald-600' },
+                  { id: 'medical', label: 'Medical Support', icon: HeartPulse },
+                  { id: 'rescue', label: 'Hazard / Rescue', icon: Flame },
+                  { id: 'elderly', label: 'Elder Assistance', icon: Users },
+                  { id: 'supplies', label: 'Rations / Supplies', icon: Package },
                 ].map((item) => {
                   const Icon = item.icon;
                   const isSelected = emergencyType === item.id;
@@ -151,16 +141,14 @@ export const SOSModal: React.FC<SOSModalProps> = ({
                       key={item.id}
                       type="button"
                       onClick={() => setEmergencyType(item.id as any)}
-                      className={`p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
+                      className={`p-2.5 rounded-lg border text-left flex items-center gap-2 transition-colors ${
                         isSelected
-                          ? accessibility.highContrast
-                            ? 'bg-yellow-400 text-black border-yellow-400 font-bold'
-                            : 'bg-rose-50 border-rose-400 text-rose-950 font-semibold ring-2 ring-rose-400/30'
+                          ? 'border-red-500 bg-red-50/50 text-red-900 font-medium'
                           : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                       }`}
                     >
-                      <Icon className={`w-5 h-5 ${item.color}`} />
-                      <span className="text-xs font-bold">{item.label}</span>
+                      <Icon className="w-4 h-4 text-slate-500 shrink-0" />
+                      <span className="text-xs">{item.label}</span>
                     </button>
                   );
                 })}
@@ -169,60 +157,51 @@ export const SOSModal: React.FC<SOSModalProps> = ({
 
             {/* Location input */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-500 flex items-center justify-between">
-                <span>2. Emergency Location</span>
-                {isLocating && <span className="text-[10px] text-blue-600">Detecting GPS...</span>}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-slate-700">Location</label>
+                {isLocating && <span className="text-[11px] text-blue-600">Detecting...</span>}
+              </div>
               <div className="relative">
-                <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <MapPin className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                 <input
                   type="text"
                   required
                   value={locationText}
                   onChange={(e) => setLocationText(e.target.value)}
-                  placeholder="Apartment, Landmark, Street or Ward"
-                  className={`w-full pl-9 pr-3 py-2 text-xs rounded-xl border focus:outline-hidden ${
-                    accessibility.highContrast
-                      ? 'bg-black text-yellow-400 border-yellow-400'
-                      : 'bg-slate-50 border-slate-200 focus:border-rose-500'
-                  }`}
+                  placeholder="Address or landmark"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-slate-200 focus:outline-hidden focus:border-slate-400"
                 />
               </div>
             </div>
 
-            {/* Additional details */}
+            {/* Details */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1.5 text-slate-500">
-                3. Situation Notes / Symptoms
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Situation Details (Optional)
               </label>
               <textarea
-                rows={3}
+                rows={2}
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
-                placeholder="Describe patient condition, number of persons, or specific assistance required..."
-                className={`w-full p-3 text-xs rounded-xl border focus:outline-hidden ${
-                  accessibility.highContrast
-                    ? 'bg-black text-yellow-400 border-yellow-400'
-                    : 'bg-slate-50 border-slate-200 focus:border-rose-500'
-                }`}
+                placeholder="Describe current condition or specific help required..."
+                className="w-full p-2 text-xs rounded-md border border-slate-200 focus:outline-hidden focus:border-slate-400"
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3 pt-2">
+            {/* Buttons */}
+            <div className="flex items-center gap-2 pt-1">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold hover:bg-slate-100 text-slate-600"
+                className="flex-1 py-2 rounded-md border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-colors"
               >
-                <AlertTriangle className="w-4 h-4" />
-                <span>BROADCAST SOS NOW</span>
+                Dispatch Alert
               </button>
             </div>
           </form>

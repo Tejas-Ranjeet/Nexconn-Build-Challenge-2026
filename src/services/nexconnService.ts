@@ -1,6 +1,6 @@
 'use client';
 
-import { PRESET_USERS, SAHAAY_CHANNELS } from '../data/mockData';
+import { PRESET_USERS, SAHAAY_CHANNELS, INITIAL_MESSAGES } from '../data/mockData';
 import { ChatMessage, UserProfile } from '../types/chat';
 
 export type NexconnConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR' | 'DEMO_MODE';
@@ -111,7 +111,7 @@ class NexconnService {
   }
 
   /**
-   * Internal message caching & persistence
+   * Internal message caching & permanent local persistence
    */
   private storeMessageLocally(channelId: string, message: ChatMessage, broadcast: boolean = true) {
     const existing = this.getChannelMessages(channelId);
@@ -122,12 +122,12 @@ class NexconnService {
     const updated = [...existing, message];
     this.channelMessages.set(channelId, updated);
 
-    // Save to browser session storage for persistence across reloads
+    // Save permanently to browser localStorage so chat data is never lost
     if (typeof window !== 'undefined') {
       try {
-        sessionStorage.setItem(`sahaay_msgs_${channelId}`, JSON.stringify(updated.slice(-100)));
-      } catch {
-        // quota exceeded or private mode
+        localStorage.setItem(`sahaay_chat_${channelId}`, JSON.stringify(updated.slice(-200)));
+      } catch (err) {
+        console.warn('LocalStorage save failed:', err);
       }
     }
 
@@ -153,22 +153,48 @@ class NexconnService {
       return this.channelMessages.get(channelId)!;
     }
 
-    // Restore from session storage if present
+    // Restore from persistent localStorage
     if (typeof window !== 'undefined') {
       try {
-        const stored = sessionStorage.getItem(`sahaay_msgs_${channelId}`);
+        const stored = localStorage.getItem(`sahaay_chat_${channelId}`);
         if (stored) {
           const parsed = JSON.parse(stored);
-          this.channelMessages.set(channelId, parsed);
-          return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.channelMessages.set(channelId, parsed);
+            return parsed;
+          }
         }
       } catch {
         // ignore
       }
     }
 
-    this.channelMessages.set(channelId, []);
-    return [];
+    // If channel has no saved history yet, seed with clean realistic messages from mockData
+    const defaultSeed = (INITIAL_MESSAGES as any)[channelId] || [];
+    this.channelMessages.set(channelId, defaultSeed);
+
+    if (typeof window !== 'undefined' && defaultSeed.length > 0) {
+      try {
+        localStorage.setItem(`sahaay_chat_${channelId}`, JSON.stringify(defaultSeed));
+      } catch {}
+    }
+
+    return defaultSeed;
+  }
+
+  public clearAllChannelHistory(channelId?: string) {
+    if (typeof window !== 'undefined') {
+      if (channelId) {
+        localStorage.removeItem(`sahaay_chat_${channelId}`);
+        this.channelMessages.delete(channelId);
+        this.messageListeners.forEach((l) => l(channelId, []));
+      } else {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('sahaay_chat_'))
+          .forEach((k) => localStorage.removeItem(k));
+        this.channelMessages.clear();
+      }
+    }
   }
 
   /**

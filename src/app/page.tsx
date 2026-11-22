@@ -92,14 +92,8 @@ export default function Home() {
   };
 
   return (
-    <div
-      className={`min-h-screen flex flex-col ${
-        accessibility.highContrast
-          ? 'bg-black text-yellow-400 font-medium'
-          : 'bg-slate-100 text-slate-900'
-      }`}
-    >
-      {/* Top Navigation & Accessibility Bar */}
+    <div className="h-screen flex flex-col bg-white text-slate-900 overflow-hidden">
+      {/* Top Navigation Bar */}
       <Header
         currentUser={currentUser}
         onSelectUser={handleSelectUser}
@@ -112,7 +106,7 @@ export default function Home() {
       />
 
       {/* Main Workspace: Sidebar & Chat Interface */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative" style={{ height: 'calc(100vh - 65px)' }}>
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
         <ChannelSidebar
           activeChannelId={activeChannel.id}
           onSelectChannel={(ch) => setActiveChannel(ch)}
@@ -128,14 +122,14 @@ export default function Home() {
         />
       </div>
 
-      {/* Floating Emergency SOS Trigger for Mobile View */}
+      {/* Floating Emergency Trigger for Mobile View */}
       <div className="md:hidden fixed bottom-4 right-4 z-30">
         <button
           onClick={() => setIsSOSOpen(true)}
-          className="flex items-center gap-2 px-4 py-3 rounded-full bg-rose-600 text-white font-bold shadow-xl animate-bounce"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-red-600 text-white font-medium text-xs shadow-md"
         >
-          <AlertTriangle className="w-5 h-5" />
-          <span>EMERGENCY SOS</span>
+          <AlertTriangle className="w-4 h-4" />
+          <span>Emergency Request</span>
         </button>
       </div>
 

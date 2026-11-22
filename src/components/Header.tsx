@@ -1,23 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { UserProfile, AccessibilitySettings } from '../types/chat';
 import { PRESET_USERS } from '../data/mockData';
 import { NexconnConnectionStatus } from '../services/nexconnService';
 import {
-  Heart,
+  Shield,
   Volume2,
   VolumeX,
   Type,
   Sun,
   Moon,
-  ShieldCheck,
+  AlertCircle,
+  MoreVertical,
+  Code2,
   FileText,
-  AlertTriangle,
-  UserCheck,
-  CheckCircle2,
-  Zap,
+  Radio,
+  ExternalLink,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -41,184 +41,179 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenProof,
   onOpenSubmission,
 }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
-    <header
-      className={`border-b transition-colors ${
-        accessibility.highContrast
-          ? 'bg-black text-yellow-400 border-yellow-400'
-          : 'bg-white/95 backdrop-blur-md text-slate-800 border-slate-200 shadow-xs'
-      } px-4 py-3 sticky top-0 z-40`}
-    >
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        {/* Brand & Mission */}
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${
-              accessibility.highContrast
-                ? 'bg-yellow-400 text-black border-2 border-black'
-                : 'bg-gradient-to-tr from-rose-600 to-orange-500 text-white'
-            }`}
-          >
-            <Heart className="w-6 h-6 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight">Sahaay</h1>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
-                सहाय
-              </span>
-              <span className="text-xs font-medium text-slate-500 hidden sm:inline">
-                Accessible Community & Emergency Network
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">
-              Powered by <strong className="text-blue-600 font-semibold">Nexconn Chat SDK</strong> · Hackathon Track
-            </p>
+    <header className="h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between z-30 select-none">
+      {/* Brand & Identity */}
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
+          <Shield className="w-4 h-4 text-slate-100" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-900 text-sm tracking-tight">Sahaay</span>
+            <span className="text-slate-300 text-xs">/</span>
+            <span className="text-xs text-slate-500 font-normal hidden sm:inline">
+              Community Support Network
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Action Controls & Accessibility Toolbar */}
-        <div className="flex items-center flex-wrap gap-2">
-          {/* Connection Indicator */}
-          <button
-            onClick={onOpenProof}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+      {/* Center / Right Controls */}
+      <div className="flex items-center gap-2.5">
+        {/* Network Connection Indicator */}
+        <div
+          onClick={onOpenProof}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700"
+          title="Click to view Nexconn network connection details"
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
               connectionStatus === 'CONNECTED'
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                ? 'bg-emerald-500'
                 : connectionStatus === 'CONNECTING'
-                ? 'bg-amber-50 text-amber-700 border-amber-300 animate-pulse'
-                : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                ? 'bg-amber-500'
+                : 'bg-slate-400'
             }`}
-            title="Inspect Nexconn Chat SDK Integration status"
-          >
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                connectionStatus === 'CONNECTED'
-                  ? 'bg-emerald-500'
-                  : connectionStatus === 'CONNECTING'
-                  ? 'bg-amber-500'
-                  : 'bg-blue-500'
-              }`}
-            />
-            <span>
-              {connectionStatus === 'CONNECTED'
-                ? 'Nexconn Connected'
-                : connectionStatus === 'CONNECTING'
-                ? 'Connecting Nexconn...'
-                : 'Nexconn SDK Active'}
-            </span>
-            <ShieldCheck className="w-3.5 h-3.5" />
-          </button>
+          />
+          <span className="hidden sm:inline">
+            {connectionStatus === 'CONNECTED'
+              ? 'Connected'
+              : connectionStatus === 'CONNECTING'
+              ? 'Connecting...'
+              : 'Offline'}
+          </span>
+        </div>
 
-          {/* Accessibility Controls */}
-          <div
-            className={`flex items-center border rounded-lg p-0.5 gap-0.5 ${
-              accessibility.highContrast ? 'border-yellow-400 bg-black' : 'border-slate-200 bg-slate-50'
-            }`}
+        {/* User Account Switcher */}
+        <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5">
+          <img
+            src={currentUser.avatarUrl}
+            alt={currentUser.name}
+            className="w-5 h-5 rounded-full object-cover"
+          />
+          <select
+            value={currentUser.userId}
+            onChange={(e) => {
+              const found = PRESET_USERS.find((u) => u.userId === e.target.value);
+              if (found) onSelectUser(found);
+            }}
+            className="text-xs font-medium text-slate-800 bg-transparent focus:outline-hidden cursor-pointer py-1 pr-1"
           >
-            {/* Font Size Button */}
-            <button
-              onClick={() => {
-                const next =
-                  accessibility.fontSize === 'normal'
-                    ? 'large'
-                    : accessibility.fontSize === 'large'
-                    ? 'xlarge'
-                    : 'normal';
-                onUpdateAccessibility({ fontSize: next });
-              }}
-              className="p-1.5 rounded hover:bg-slate-200/60 text-xs font-bold flex items-center gap-1"
-              title="Change Text Size for Accessibility"
-            >
-              <Type className="w-3.5 h-3.5" />
-              <span>
-                {accessibility.fontSize === 'normal'
-                  ? 'A'
+            {PRESET_USERS.map((user) => (
+              <option key={user.userId} value={user.userId}>
+                {user.name} ({user.badge})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Accessibility Toggles (Clean & Subtle) */}
+        <div className="hidden md:flex items-center border border-slate-200 rounded-md p-0.5 text-slate-600 bg-slate-50">
+          {/* Font Size Toggle */}
+          <button
+            onClick={() => {
+              const next =
+                accessibility.fontSize === 'normal'
+                  ? 'large'
                   : accessibility.fontSize === 'large'
-                  ? 'A+'
-                  : 'A++'}
-              </span>
-            </button>
-
-            {/* High Contrast Mode Toggle */}
-            <button
-              onClick={() => onUpdateAccessibility({ highContrast: !accessibility.highContrast })}
-              className={`p-1.5 rounded text-xs font-medium flex items-center ${
-                accessibility.highContrast ? 'bg-yellow-400 text-black' : 'hover:bg-slate-200/60'
-              }`}
-              title="Toggle High Contrast Mode (WCAG AAA)"
-            >
-              {accessibility.highContrast ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            </button>
-
-            {/* Text to Speech Toggle */}
-            <button
-              onClick={() =>
-                onUpdateAccessibility({
-                  textToSpeechEnabled: !accessibility.textToSpeechEnabled,
-                })
-              }
-              className={`p-1.5 rounded text-xs font-medium flex items-center ${
-                accessibility.textToSpeechEnabled ? 'text-blue-600 bg-blue-50' : 'hover:bg-slate-200/60'
-              }`}
-              title="Toggle Audio Read-Out (Text-to-Speech)"
-            >
-              {accessibility.textToSpeechEnabled ? (
-                <Volume2 className="w-3.5 h-3.5" />
-              ) : (
-                <VolumeX className="w-3.5 h-3.5" />
-              )}
-            </button>
-          </div>
-
-          {/* User Persona Switcher */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-            <span className="text-xs text-slate-500 font-medium pl-1.5 hidden md:inline">Role:</span>
-            <select
-              value={currentUser.userId}
-              onChange={(e) => {
-                const found = PRESET_USERS.find((u) => u.userId === e.target.value);
-                if (found) onSelectUser(found);
-              }}
-              className="text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 focus:outline-hidden"
-            >
-              {PRESET_USERS.map((user) => (
-                <option key={user.userId} value={user.userId}>
-                  {user.name} ({user.badge})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Interactive SDK Studio Button (Matches Official Nexconn Guide) */}
-          <Link
-            href="/simulator"
-            className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-blue-300 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs"
-            title="Open Interactive Nexconn SDK Studio matching official documentation"
+                  ? 'xlarge'
+                  : 'normal';
+              onUpdateAccessibility({ fontSize: next });
+            }}
+            className="px-2 py-1 hover:bg-white rounded text-xs font-semibold transition-colors"
+            title="Adjust text scale"
           >
-            <Zap className="w-3.5 h-3.5 text-yellow-400 fill-current" />
-            <span className="hidden sm:inline">SDK Studio</span>
-          </Link>
-
-          {/* Hackathon Submission Form Helper Button */}
-          <button
-            onClick={onOpenSubmission}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-xs"
-            title="Open Hackathon Submission Form Helper & Write-Up"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Submission Kit</span>
+            <Type className="w-3.5 h-3.5" />
           </button>
 
-          {/* SOS Emergency Trigger Button */}
+          {/* Audio Read-Aloud Toggle */}
           <button
-            onClick={onOpenSOS}
-            className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg animate-pulse"
-            title="Broadcast Immediate Emergency SOS"
+            onClick={() =>
+              onUpdateAccessibility({
+                textToSpeechEnabled: !accessibility.textToSpeechEnabled,
+              })
+            }
+            className={`px-2 py-1 rounded text-xs transition-colors ${
+              accessibility.textToSpeechEnabled ? 'bg-white text-blue-600 shadow-2xs' : 'hover:bg-white'
+            }`}
+            title="Read incoming messages aloud"
           >
-            <AlertTriangle className="w-4 h-4" />
-            <span>SOS EMERGENCY</span>
+            {accessibility.textToSpeechEnabled ? (
+              <Volume2 className="w-3.5 h-3.5" />
+            ) : (
+              <VolumeX className="w-3.5 h-3.5 text-slate-400" />
+            )}
           </button>
+        </div>
+
+        {/* Emergency Request Button */}
+        <button
+          onClick={onOpenSOS}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-red-600 hover:bg-red-700 text-white transition-colors shadow-2xs"
+          title="Send an emergency distress request"
+        >
+          <AlertCircle className="w-3.5 h-3.5" />
+          <span>Emergency Request</span>
+        </button>
+
+        {/* More Options / Developer Tools Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-1.5 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            title="More options and integration info"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+
+          {isMenuOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsMenuOpen(false)}
+              />
+              <div className="absolute right-0 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-xs">
+                <div className="px-3 py-1.5 font-semibold text-slate-400 uppercase tracking-wider text-[10px]">
+                  Integration & Tools
+                </div>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenProof();
+                  }}
+                  className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <Code2 className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Nexconn SDK Status & Logs</span>
+                </button>
+                <Link
+                  href="/simulator"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <Radio className="w-3.5 h-3.5 text-slate-400" />
+                  <span>SDK Documentation Studio</span>
+                </Link>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onOpenSubmission();
+                  }}
+                  className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <FileText className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Hackathon Submission Kit</span>
+                </button>
+                <div className="border-t border-slate-100 my-1" />
+                <div className="px-3 py-1 text-[11px] text-slate-400">
+                  App Key: z3v5yqkbzet40
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>
