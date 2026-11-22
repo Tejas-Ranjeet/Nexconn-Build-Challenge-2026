@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: 'Sahaay – Community Support Network',
   description:
     'Community response and mutual-aid communication network powered by Nexconn Chat SDK & Chat UI.',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/favicon.ico',
+    apple: '/icon.png',
+  },
   keywords: [
     'Sahaay',
     'Nexconn',

@@ -40,13 +40,20 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="h-13 border-b border-slate-200/80 bg-white px-4 flex items-center justify-between z-30 select-none shrink-0">
-      {/* Brand: Clean typographic title, no tacky logo box */}
-      <div className="flex items-center gap-2">
-        <span className="font-bold text-slate-900 text-base tracking-tight">Sahaay</span>
-        <span className="text-slate-300 text-xs">/</span>
-        <span className="text-xs text-slate-500 font-normal hidden sm:inline">
-          Community Support
-        </span>
+      {/* Brand: Logo & Title */}
+      <div className="flex items-center gap-2.5">
+        <img
+          src="/logo.png"
+          alt="Sahaay"
+          className="w-7 h-7 object-contain rounded-md"
+        />
+        <div className="flex items-center gap-1.5">
+          <span className="font-bold text-slate-900 text-base tracking-tight">Sahaay</span>
+          <span className="text-slate-300 text-xs">/</span>
+          <span className="text-xs text-slate-500 font-normal hidden sm:inline">
+            Community Support
+          </span>
+        </div>
       </div>
 
       {/* Right Controls */}
