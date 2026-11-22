@@ -4,6 +4,15 @@ import { PRESET_USERS, SAHAAY_CHANNELS } from '../data/mockData';
 
 export type NexconnConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR' | 'DEMO_MODE';
 
+export interface SDKLogEntry {
+  id: string;
+  timestamp: string;
+  step: string;
+  codeSnippet: string;
+  output: any;
+  status: 'success' | 'warning' | 'info' | 'error';
+}
+
 class NexconnService {
   private static instance: NexconnService;
   private nceEngine: any = null;
@@ -11,8 +20,11 @@ class NexconnService {
   private isInitialized = false;
   private connectionStatus: NexconnConnectionStatus = 'DISCONNECTED';
   private statusListeners: Array<(status: NexconnConnectionStatus, message?: string) => void> = [];
-  private currentUserId: string = '';
+  private messageListeners: Array<(messages: any[]) => void> = [];
+  private logListeners: Array<(log: SDKLogEntry) => void> = [];
+  private currentUserId: string = 'user_1';
   private currentAppKey: string = '';
+  private logs: SDKLogEntry[] = [];
 
   private constructor() {}
 
@@ -31,11 +43,43 @@ class NexconnService {
     return this.currentUserId;
   }
 
+  public getLogs(): SDKLogEntry[] {
+    return this.logs;
+  }
+
+  public addLogListener(listener: (log: SDKLogEntry) => void) {
+    this.logListeners.push(listener);
+    return () => {
+      this.logListeners = this.logListeners.filter((l) => l !== listener);
+    };
+  }
+
+  public logSDKAction(step: string, codeSnippet: string, output: any, status: 'success' | 'warning' | 'info' | 'error' = 'info') {
+    const entry: SDKLogEntry = {
+      id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toLocaleTimeString(),
+      step,
+      codeSnippet,
+      output,
+      status,
+    };
+    this.logs.unshift(entry);
+    if (this.logs.length > 50) this.logs.pop();
+    this.logListeners.forEach((l) => l(entry));
+  }
+
   public addStatusListener(listener: (status: NexconnConnectionStatus, message?: string) => void) {
     this.statusListeners.push(listener);
     listener(this.connectionStatus);
     return () => {
       this.statusListeners = this.statusListeners.filter((l) => l !== listener);
+    };
+  }
+
+  public addMessageListener(listener: (messages: any[]) => void) {
+    this.messageListeners.push(listener);
+    return () => {
+      this.messageListeners = this.messageListeners.filter((l) => l !== listener);
     };
   }
 
@@ -45,7 +89,7 @@ class NexconnService {
   }
 
   /**
-   * Initializes Nexconn Engine and ChatUI
+   * 1. Initialize Nexconn Chat SDK (with AreaCode.SG)
    */
   public async initialize(appKeyInput?: string): Promise<boolean> {
     if (typeof window === 'undefined') return false;
@@ -55,23 +99,72 @@ class NexconnService {
         appKeyInput ||
         process.env.NEXT_PUBLIC_NEXCONN_APP_KEY ||
         localStorage.getItem('nexconn_app_key') ||
-        'YOUR_APP_KEY';
+        'uwd1c0sxdlx2'; // Default test key
 
       this.currentAppKey = appKey;
 
-      // Dynamically import Nexconn modules on client side
-      const { NCEngine, LogLevel, ConnectionStatusHandler } = await import('@nexconn/chat');
+      const { NCEngine, AreaCode, ConnectionStatusHandler, MessageHandler } = await import('@nexconn/chat');
       const { NCChatUIApplication } = await import('@nexconn/chatui');
 
-      // Initialize Nexconn Chat Engine
+      // Initialize with Singapore Data Center as specified in guide
       NCEngine.initialize({
         appKey,
-        logLevel: LogLevel.DEBUG,
+        areaCode: AreaCode.SG,
       });
 
       this.nceEngine = NCEngine;
 
-      // Define ServiceHooks for user and group profiles
+      this.logSDKAction(
+        'Initialize SDK',
+        `import { AreaCode, NCEngine } from '@nexconn/chat';\n\nNCEngine.initialize({\n  appKey: '${appKey}',\n  areaCode: AreaCode.SG,\n});`,
+        { initialized: true, appKey, areaCode: 'AreaCode.SG' },
+        'success'
+      );
+
+      // 2. Register Connection Status Handler (Must be done before connecting)
+      NCEngine.addConnectionStatusHandler(
+        'sahaay_conn_handler',
+        new ConnectionStatusHandler({
+          onConnectionStatusChanged: (event: any) => {
+            const status = event?.status;
+            const code = event?.code;
+            console.log('[Nexconn] Connection status changed:', status, 'code:', code);
+            this.logSDKAction(
+              'Connection Status Event',
+              `NCEngine.addConnectionStatusHandler('sahaay_conn_handler', new ConnectionStatusHandler({ ... }))`,
+              { status, code },
+              status === 'CONNECTED' || status === 0 ? 'success' : 'warning'
+            );
+
+            if (status === 'CONNECTED' || status === 0) {
+              this.notifyStatus('CONNECTED');
+            } else if (status === 'CONNECTING' || status === 1) {
+              this.notifyStatus('CONNECTING');
+            } else {
+              this.notifyStatus('DISCONNECTED', `Code: ${code}`);
+            }
+          },
+        })
+      );
+
+      // 3. Register Global Message Handler (Must be done before connecting)
+      NCEngine.addMessageHandler(
+        'sahaay_msg_handler',
+        new MessageHandler({
+          onMessageReceived: ({ messages }: { messages: any[] }) => {
+            console.log('[Nexconn] Messages received in handler:', messages);
+            this.logSDKAction(
+              'Receive Messages',
+              `NCEngine.addMessageHandler('sahaay_msg_handler', new MessageHandler({ onMessageReceived({ messages }) { ... } }))`,
+              { count: messages.length, messages },
+              'info'
+            );
+            this.messageListeners.forEach((l) => l(messages));
+          },
+        })
+      );
+
+      // 4. Initialize Pre-built ChatUI Application
       const hooks = {
         async reqUserProfiles(userIds: string[]) {
           return userIds.map((userId) => {
@@ -103,12 +196,11 @@ class NexconnService {
         async reqSystemProfiles(systemIds: string[]) {
           return systemIds.map((systemId) => ({
             systemId,
-            name: `Sahaay Alert System (${systemId})`,
+            name: `Sahaay Emergency Alert (${systemId})`,
           }));
         },
       };
 
-      // Initialize ChatUI application
       const app = NCChatUIApplication.initialize({
         hooks,
         language: 'en_US',
@@ -119,44 +211,60 @@ class NexconnService {
         this.chatUIApp = app;
       }
 
-      // Add connection status handler
-      NCEngine.addConnectionStatusHandler(
-        'sahaay_handler',
-        new ConnectionStatusHandler({
-          onConnectionStatusChanged: (event: any) => {
-            const status = event?.status;
-            const code = event?.code;
-            console.log('[Nexconn] Connection status changed:', status, 'code:', code);
-            if (status === 'CONNECTED' || status === 0) {
-              this.notifyStatus('CONNECTED');
-            } else if (status === 'CONNECTING' || status === 1) {
-              this.notifyStatus('CONNECTING');
-            } else {
-              this.notifyStatus('DISCONNECTED', `Code: ${code}`);
-            }
-          },
-        })
-      );
-
       this.isInitialized = true;
       return true;
     } catch (err: any) {
       console.warn('[Nexconn] SDK Initialization notice:', err.message);
-      // Fallback to demo mode for testing UI
+      this.logSDKAction('Initialize SDK Failed', `NCEngine.initialize(...)`, { error: err.message }, 'warning');
       this.notifyStatus('DEMO_MODE', 'Running in interactive demo mode');
       return false;
     }
   }
 
   /**
-   * Connects user using a server-issued access token
+   * 4. Connect with an access token (Official Nexconn API)
+   */
+  public async connectWithToken(token: string, userId?: string): Promise<{ success: boolean; data?: any; code?: number }> {
+    if (!this.nceEngine) {
+      await this.initialize();
+    }
+
+    this.notifyStatus('CONNECTING');
+    this.currentUserId = userId || this.currentUserId;
+
+    try {
+      const codeSnippet = `import { NCEngine } from '@nexconn/chat';\n\nconst res = await NCEngine.connect({ token: '${token.substring(0, 30)}...' });`;
+      
+      const res = await this.nceEngine.connect({ token });
+      
+      if (res.code === 0 || res.isOk) {
+        const uid = res.data?.userId || this.currentUserId;
+        this.currentUserId = uid;
+        this.notifyStatus('CONNECTED', `Connected. User ID: ${uid}`);
+        this.logSDKAction('Connect', codeSnippet, { code: 0, userId: uid, status: 'CONNECTED' }, 'success');
+        return { success: true, data: res.data };
+      } else {
+        console.warn('[Nexconn] Connect response code:', res.code);
+        this.notifyStatus('DEMO_MODE', `Connection returned code ${res.code}`);
+        this.logSDKAction('Connect (Notice)', codeSnippet, { code: res.code, note: 'Switched to local simulator' }, 'warning');
+        return { success: false, code: res.code };
+      }
+    } catch (err: any) {
+      console.warn('[Nexconn] Connect exception:', err.message);
+      this.notifyStatus('DEMO_MODE', err.message);
+      this.logSDKAction('Connect Error', `NCEngine.connect({ token: '...' })`, { error: err.message }, 'error');
+      return { success: false, code: -1 };
+    }
+  }
+
+  /**
+   * Connect using server-minted token or fallback demo
    */
   public async connectUser(userId: string, name: string): Promise<{ success: boolean; isDemo: boolean }> {
     this.currentUserId = userId;
-    this.notifyStatus('CONNECTING');
 
     try {
-      // Fetch token from server API endpoint
+      // First request token from our secure server API route
       const response = await fetch('/api/nexconn/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,42 +276,145 @@ class NexconnService {
       });
 
       const tokenData = await response.json();
+      const token = tokenData.result?.accessToken;
 
-      if (tokenData.mode === 'demo' || !tokenData.result?.accessToken || tokenData.result.accessToken.startsWith('demo_token')) {
-        console.log('[Nexconn] Connected in Demo / Simulation Mode');
-        this.notifyStatus('DEMO_MODE', 'Connected in Demo Mode');
-        return { success: true, isDemo: true };
-      }
-
-      if (this.nceEngine) {
-        const result = await this.nceEngine.connect({ token: tokenData.result.accessToken });
-        if (result.isOk) {
-          console.log('[Nexconn] Live connected to server! User:', result.data.userId);
-          this.notifyStatus('CONNECTED', `Connected as ${userId}`);
+      if (token && !token.startsWith('demo_token') && this.nceEngine) {
+        const connectRes = await this.connectWithToken(token, userId);
+        if (connectRes.success) {
           return { success: true, isDemo: false };
-        } else {
-          console.warn('[Nexconn] Connect call returned error code:', result.code);
-          this.notifyStatus('DEMO_MODE', `Server error (${result.code}), switched to demo mode`);
-          return { success: true, isDemo: true };
         }
       }
 
-      this.notifyStatus('DEMO_MODE');
+      // If token is simulated or offline, connect in demo mode
+      this.notifyStatus('DEMO_MODE', 'Connected in Demo Simulation Mode');
+      this.logSDKAction(
+        'Server Token Issue',
+        `POST /api/nexconn/token\n// Server computes SHA1(AppSecret + Nonce + Timestamp)`,
+        { userId, mode: tokenData.mode || 'demo' },
+        'info'
+      );
       return { success: true, isDemo: true };
     } catch (err: any) {
-      console.warn('[Nexconn] Connect error, falling back to demo mode:', err);
       this.notifyStatus('DEMO_MODE', err.message);
       return { success: true, isDemo: true };
     }
   }
 
   /**
-   * Opens a channel in ChatUI
+   * 5. Send Text Message via DirectChannel or GroupChannel
    */
-  public async openChannel(channelId: string, isDirect: boolean = false): Promise<boolean> {
-    if (!this.chatUIApp || !this.chatUIApp.ifReady()) {
+  public async sendTextMessage(targetId: string, text: string, isGroup: boolean = false): Promise<{ success: boolean; data?: any; code?: number }> {
+    const codeSnippet = isGroup
+      ? `import { GroupChannel, SendTextMessageParams } from '@nexconn/chat';\n\nconst group = new GroupChannel('${targetId}');\nconst params = new SendTextMessageParams({ text: '${text}' });\nconst { code, data } = await group.sendMessage(params);`
+      : `import { DirectChannel, SendTextMessageParams } from '@nexconn/chat';\n\nconst channel = new DirectChannel('${targetId}');\nconst params = new SendTextMessageParams({ text: '${text}' });\nconst { code, data } = await channel.sendMessage(params);`;
+
+    try {
+      const { DirectChannel, GroupChannel, SendTextMessageParams } = await import('@nexconn/chat');
+      const channel = isGroup ? new GroupChannel(targetId) : new DirectChannel(targetId);
+      const params = new SendTextMessageParams({ text });
+
+      const result = await (channel as any).sendMessage(params);
+      
+      const code = result?.code ?? (result?.isOk ? 0 : 1);
+      this.logSDKAction(
+        isGroup ? 'Send Group Message' : 'Send Direct Message',
+        codeSnippet,
+        { code, data: result?.data, channelId: targetId },
+        code === 0 ? 'success' : 'warning'
+      );
+      return { success: code === 0, data: result?.data, code };
+    } catch (err: any) {
+      this.logSDKAction('Send Message Failed', codeSnippet, { error: err.message }, 'warning');
+      return { success: false, code: -1 };
+    }
+  }
+
+  /**
+   * 6. Load Message History via BaseChannel.createMessagesQuery
+   */
+  public async loadMessageHistory(channelId: string, isGroup: boolean = false): Promise<{ success: boolean; messages?: any[] }> {
+    const codeSnippet = `import { BaseChannel, ${isGroup ? 'GroupChannel' : 'DirectChannel'} } from '@nexconn/chat';\n\nconst channel = new ${isGroup ? 'GroupChannel' : 'DirectChannel'}('${channelId}');\nconst query = BaseChannel.createMessagesQuery({\n  channelIdentifier: channel.identifier,\n  startTime: Date.now(),\n  pageSize: 20,\n  isAscending: false,\n});\nconst { code, data } = await query.loadNextPage();`;
+
+    try {
+      const { BaseChannel, DirectChannel, GroupChannel } = await import('@nexconn/chat');
+      const channel = isGroup ? new GroupChannel(channelId) : new DirectChannel(channelId);
+      
+      const query = (BaseChannel as any).createMessagesQuery({
+        channelIdentifier: (channel as any).identifier,
+        startTime: Date.now(),
+        pageSize: 20,
+        isAscending: false,
+      });
+
+      const res = await query.loadNextPage();
+      this.logSDKAction('Load Message History', codeSnippet, { code: res.code, count: res.data?.length || 0 }, 'success');
+      return { success: res.code === 0, messages: res.data };
+    } catch (err: any) {
+      this.logSDKAction('Load History', codeSnippet, { error: err.message }, 'warning');
+      return { success: false };
+    }
+  }
+
+  /**
+   * 7. Load Channel List via BaseChannel.createChannelsQuery
+   */
+  public async loadChannelsList(): Promise<{ success: boolean; channels?: any[] }> {
+    const codeSnippet = `import { BaseChannel } from '@nexconn/chat';\n\nconst query = BaseChannel.createChannelsQuery({ pageSize: 20 });\nconst { code, data: channelList } = await query.loadNextPage();`;
+
+    try {
+      const { BaseChannel } = await import('@nexconn/chat');
+      const query = (BaseChannel as any).createChannelsQuery({ pageSize: 20 });
+      const res = await query.loadNextPage();
+      this.logSDKAction('Load Channels Query', codeSnippet, { code: res.code, channelsCount: res.data?.length || 0 }, 'success');
+      return { success: res.code === 0, channels: res.data };
+    } catch (err: any) {
+      this.logSDKAction('Load Channels Query', codeSnippet, { error: err.message }, 'warning');
+      return { success: false };
+    }
+  }
+
+  /**
+   * 8. Update User Profile via NCEngine.userModule.updateMyUserProfile
+   */
+  public async updateUserProfile(name: string, avatarUrl: string): Promise<boolean> {
+    const codeSnippet = `const { code } = await NCEngine.userModule.updateMyUserProfile({\n  name: '${name}',\n  avatarUrl: '${avatarUrl}',\n});`;
+
+    try {
+      if (this.nceEngine?.userModule) {
+        const { code } = await this.nceEngine.userModule.updateMyUserProfile({ name, avatarUrl });
+        this.logSDKAction('Update User Profile', codeSnippet, { code, name, avatarUrl }, code === 0 ? 'success' : 'info');
+        return code === 0;
+      }
+      this.logSDKAction('Update User Profile (Simulated)', codeSnippet, { code: 0, name, avatarUrl }, 'info');
+      return true;
+    } catch (err: any) {
+      this.logSDKAction('Update Profile Error', codeSnippet, { error: err.message }, 'warning');
       return false;
     }
+  }
+
+  /**
+   * 9. Disconnect & Sign Out
+   */
+  public async disconnect(): Promise<void> {
+    const codeSnippet = `import { NCEngine } from '@nexconn/chat';\n\nawait NCEngine.disconnect();`;
+    try {
+      if (this.nceEngine) {
+        await this.nceEngine.disconnect();
+      }
+      this.notifyStatus('DISCONNECTED');
+      this.logSDKAction('Disconnect & Sign Out', codeSnippet, { status: 'DISCONNECTED' }, 'info');
+    } catch (err: any) {
+      this.notifyStatus('DISCONNECTED');
+      this.logSDKAction('Disconnect', codeSnippet, { error: err.message }, 'warning');
+    }
+  }
+
+  /**
+   * Opens channel in ChatUI
+   */
+  public async openChannel(channelId: string, isDirect: boolean = false): Promise<boolean> {
+    if (!this.chatUIApp || !this.chatUIApp.ifReady()) return false;
 
     try {
       const { DirectChannelIdentifier, GroupChannelIdentifier } = await import('@nexconn/chat');
@@ -214,7 +425,6 @@ class NexconnService {
       await this.chatUIApp.openChannel(identifier, true);
       return true;
     } catch (err) {
-      console.warn('[Nexconn] openChannel warning:', err);
       return false;
     }
   }

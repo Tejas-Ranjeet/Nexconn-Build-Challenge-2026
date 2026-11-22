@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { UserProfile, AccessibilitySettings } from '../types/chat';
 import { PRESET_USERS } from '../data/mockData';
 import { NexconnConnectionStatus } from '../services/nexconnService';
@@ -16,6 +17,7 @@ import {
   AlertTriangle,
   UserCheck,
   CheckCircle2,
+  Zap,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -187,6 +189,16 @@ export const Header: React.FC<HeaderProps> = ({
               ))}
             </select>
           </div>
+
+          {/* Interactive SDK Studio Button (Matches Official Nexconn Guide) */}
+          <Link
+            href="/simulator"
+            className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-blue-300 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs"
+            title="Open Interactive Nexconn SDK Studio matching official documentation"
+          >
+            <Zap className="w-3.5 h-3.5 text-yellow-400 fill-current" />
+            <span className="hidden sm:inline">SDK Studio</span>
+          </Link>
 
           {/* Hackathon Submission Form Helper Button */}
           <button
