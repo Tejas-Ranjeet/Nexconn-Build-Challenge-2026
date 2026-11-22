@@ -30,6 +30,7 @@ class NexconnService {
   // Real-time message storage per channel
   private channelMessages: Map<string, ChatMessage[]> = new Map();
   private broadcastBus: BroadcastChannel | null = null;
+  private hasJoinedCommunityGroups = false;
 
   private constructor() {
     if (typeof window !== 'undefined') {
@@ -457,17 +458,20 @@ class NexconnService {
   }
 
   /**
-   * Auto-join community channels on Nexconn
+   * Auto-join community channels on Nexconn (run once)
    */
   public async joinCommunityChannels(): Promise<void> {
+    if (this.hasJoinedCommunityGroups) return;
+    this.hasJoinedCommunityGroups = true;
+
     try {
       const { GroupChannel } = await import('@nexconn/chat');
       const groups = [
-        { id: 'sahaay_emergency', name: '🚨 Emergency SOS & Disaster Response' },
-        { id: 'sahaay_medical', name: '💊 Medical & Prescription Assistance' },
-        { id: 'sahaay_volunteers', name: '🤝 Volunteer Coordination' },
-        { id: 'sahaay_announcements', name: '📢 Community Announcements' },
-        { id: 'sahaay_general', name: '🏘️ General Neighborhood Help' },
+        { id: 'sahaay_emergency', name: 'Emergency & Rescue' },
+        { id: 'sahaay_medical', name: 'Medical Support' },
+        { id: 'sahaay_volunteers', name: 'Volunteer Network' },
+        { id: 'sahaay_announcements', name: 'Community Announcements' },
+        { id: 'sahaay_general', name: 'General Support' },
       ];
 
       for (const g of groups) {
@@ -479,12 +483,6 @@ class NexconnService {
           });
         } catch {
           // already exists
-        }
-        try {
-          const group = new GroupChannel(g.id);
-          await (group as any).join?.();
-        } catch {
-          // already joined
         }
       }
     } catch {

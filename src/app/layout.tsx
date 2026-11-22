@@ -2,17 +2,15 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Sahaay (सहाय) – Accessible Community & Emergency Communication',
+  title: 'Sahaay – Community Support Network',
   description:
-    'Inclusive emergency response and mutual-aid communication network powered by Nexconn Chat SDK & Chat UI.',
+    'Community response and mutual-aid communication network powered by Nexconn Chat SDK & Chat UI.',
   keywords: [
     'Sahaay',
     'Nexconn',
     'Nexconn Chat SDK',
     'Emergency Communication',
-    'Accessible Chat',
     'Community Aid',
-    'Hackathon',
   ],
 };
 
@@ -23,7 +21,34 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col font-sans antialiased">{children}</body>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window !== 'undefined') {
+                  const origError = console.error;
+                  console.error = function() {
+                    // Suppress empty object or vendor SDK socket warnings in dev overlay
+                    if (arguments.length === 1 && typeof arguments[0] === 'object' && arguments[0] !== null && Object.keys(arguments[0]).length === 0) {
+                      console.warn('[SDK Notice]', arguments[0]);
+                      return;
+                    }
+                    if (typeof arguments[0] === 'string' && (arguments[0].includes('IMLib') || arguments[0].includes('socket error') || arguments[0].includes('pb decode'))) {
+                      console.warn(...arguments);
+                      return;
+                    }
+                    origError.apply(console, arguments);
+                  };
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-sans antialiased bg-white text-slate-900">
+        {children}
+      </body>
     </html>
   );
 }
