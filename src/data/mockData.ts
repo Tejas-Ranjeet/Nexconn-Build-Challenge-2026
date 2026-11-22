@@ -111,6 +111,9 @@ export const DIRECT_CHANNELS: SahaayChannel[] = [
   },
 ];
 
+// Fixed baseline timestamp for deterministic SSR and client hydration
+const BASE_TIME = 1763820000000;
+
 export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
   sahaay_emergency: [
     {
@@ -121,7 +124,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'citizen',
       senderAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
       content: '🚨 SOS ALERT: Experiencing severe chest discomfort and breathlessness at Flat 302, Pocket B, Rohini. Need an oxygen cylinder or quick ambulance support!',
-      timestamp: Date.now() - 1000 * 60 * 18,
+      timestamp: BASE_TIME - 1000 * 60 * 18,
       isUrgent: true,
       isSOS: true,
       emergencyDetails: {
@@ -138,7 +141,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'doctor',
       senderAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150',
       content: 'Anita ji, please sit upright and breathe slowly. Do not exert yourself. Volunteer Arjun is 3 minutes away with an emergency portable concentrator.',
-      timestamp: Date.now() - 1000 * 60 * 14,
+      timestamp: BASE_TIME - 1000 * 60 * 14,
       isUrgent: true,
     },
     {
@@ -149,7 +152,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'volunteer',
       senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150',
       content: 'Arrived at Gate 2 of Pocket B. Taking elevator to Flat 302 right now with the medical kit.',
-      timestamp: Date.now() - 1000 * 60 * 8,
+      timestamp: BASE_TIME - 1000 * 60 * 8,
       isUrgent: true,
     },
   ],
@@ -162,7 +165,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'citizen',
       senderAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
       content: 'Can any volunteer help procure blood pressure medication (Telmisartan 40mg)? Local pharmacy is currently shut due to waterlogging.',
-      timestamp: Date.now() - 1000 * 60 * 45,
+      timestamp: BASE_TIME - 1000 * 60 * 45,
       isUrgent: false,
     },
     {
@@ -173,7 +176,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'doctor',
       senderAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150',
       content: 'Verified prescription on file. Our central community clinic has stock. Arjun can pick it up on his route.',
-      timestamp: Date.now() - 1000 * 60 * 30,
+      timestamp: BASE_TIME - 1000 * 60 * 30,
       isUrgent: false,
     },
   ],
@@ -186,7 +189,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'coordinator',
       senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150',
       content: 'Team: Heavy rain advisory active for next 6 hours. Teams Alpha & Beta please check battery backups and maintain radio & Nexconn Chat availability.',
-      timestamp: Date.now() - 1000 * 60 * 60,
+      timestamp: BASE_TIME - 1000 * 60 * 60,
       isUrgent: false,
     },
   ],
@@ -199,7 +202,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'coordinator',
       senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150',
       content: '📢 OFFICIAL BULLETIN: Free health checkup & medicine distribution camp organized at Sector 4 Community Center tomorrow from 9:00 AM to 4:00 PM. High priority for elders.',
-      timestamp: Date.now() - 1000 * 60 * 120,
+      timestamp: BASE_TIME - 1000 * 60 * 120,
       isUrgent: false,
     },
   ],
@@ -212,7 +215,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'citizen',
       senderAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150',
       content: 'Namaste everyone, warm thanks to the volunteers who helped clear the drainage overflow outside lane 4 this morning!',
-      timestamp: Date.now() - 1000 * 60 * 180,
+      timestamp: BASE_TIME - 1000 * 60 * 180,
       isUrgent: false,
     },
   ],
@@ -225,7 +228,7 @@ export const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
       senderRole: 'doctor',
       senderAvatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150',
       content: 'Hello Anita ji, I am monitoring your health records. Please message here directly if you need any medical guidance or report review.',
-      timestamp: Date.now() - 1000 * 60 * 90,
+      timestamp: BASE_TIME - 1000 * 60 * 90,
       isUrgent: false,
     },
   ],

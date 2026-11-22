@@ -45,8 +45,25 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [viewMode, setViewMode] = useState<'accessible' | 'official_chatui'>('accessible');
   const [chatUIMounted, setChatUIMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const formatMessageTime = (timestamp: number) => {
+    if (!isMounted) return '';
+    try {
+      return new Date(timestamp).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return '';
+    }
+  };
 
   // Sync messages when channel changes
   useEffect(() => {
@@ -325,11 +342,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                           {msg.senderRole.toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-[10px] opacity-75">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                      <span className="text-[10px] opacity-75" suppressHydrationWarning>
+                        {formatMessageTime(msg.timestamp)}
                       </span>
                     </div>
 
