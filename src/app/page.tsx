@@ -122,17 +122,6 @@ export default function Home() {
         />
       </div>
 
-      {/* Floating Emergency Trigger for Mobile View */}
-      <div className="md:hidden fixed bottom-4 right-4 z-30">
-        <button
-          onClick={() => setIsSOSOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-red-600 text-white font-medium text-xs shadow-md"
-        >
-          <AlertTriangle className="w-4 h-4" />
-          <span>Emergency Request</span>
-        </button>
-      </div>
-
       {/* Modals */}
       <SOSModal
         isOpen={isSOSOpen}
