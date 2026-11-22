@@ -138,9 +138,10 @@ export default function WriteupPage() {
             4. Nexconn Integration Credentials & Verification
           </h2>
           <div className="text-xs space-y-1 text-slate-700">
-            <p><strong>Configured App Key:</strong> Stored securely in <code>NEXT_PUBLIC_NEXCONN_APP_KEY</code>.</p>
-            <p><strong>Nexconn Data Center:</strong> Singapore Regional Hub (<code>api.sg-light-api.com</code>).</p>
-            <p><strong>Server API Authentication:</strong> SHA1 Nonce & Timestamp Verification.</p>
+            <p><strong>Configured App Key:</strong> <code className="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">z3v5yqkbzet40</code></p>
+            <p><strong>Application Name:</strong> Sahaay (Console ID: Sahaay · Status: Activated)</p>
+            <p><strong>Nexconn Data Center:</strong> Singapore Regional Hub (<code>api.sg-light-api.com</code> · <code>AreaCode.SG</code>).</p>
+            <p><strong>Server API Authentication:</strong> SHA-1 Nonce & Timestamp Verification (App Secret secured on server).</p>
           </div>
         </section>
 

@@ -158,17 +158,22 @@ export const SubmissionHelper: React.FC<SubmissionHelperProps> = ({
               <label className="font-bold text-slate-700 dark:text-slate-300 block mb-1">
                 Nexconn App Key*
               </label>
-              <p className="text-slate-500 mb-1.5">
-                Copy your App Key from{' '}
-                <a
-                  href="https://console.nexconn.ai/agile/apps/km"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-600 underline font-semibold"
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value="z3v5yqkbzet40"
+                  className="flex-1 p-2 bg-white dark:bg-slate-800 border rounded-lg font-mono font-bold text-blue-600"
+                />
+                <button
+                  onClick={() => copyToClipboard('z3v5yqkbzet40', 'appkey')}
+                  className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-1 font-bold"
                 >
-                  console.nexconn.ai/agile/apps/km
-                </a>
-                .
+                  {copiedField === 'appkey' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Verified live App Key registered in Singapore region (<a href="https://console.nexconn.ai/agile/apps/km" target="_blank" rel="noreferrer" className="text-blue-600 underline">console.nexconn.ai/agile/apps/km</a>).
               </p>
             </div>
 

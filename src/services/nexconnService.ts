@@ -98,8 +98,8 @@ class NexconnService {
       const appKey =
         appKeyInput ||
         process.env.NEXT_PUBLIC_NEXCONN_APP_KEY ||
-        localStorage.getItem('nexconn_app_key') ||
-        'uwd1c0sxdlx2'; // Default test key
+        (typeof window !== 'undefined' ? localStorage.getItem('nexconn_app_key') : null) ||
+        'z3v5yqkbzet40'; // Verified Live Nexconn App Key
 
       this.currentAppKey = appKey;
 

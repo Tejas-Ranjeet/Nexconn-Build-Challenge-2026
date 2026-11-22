@@ -66,6 +66,21 @@ export const NexconnInteractiveSimulator: React.FC<NexconnInteractiveSimulatorPr
     const unsub = nexconnService.addLogListener((newLog) => {
       setSdkLogs((prev) => [newLog, ...prev.slice(0, 30)]);
     });
+
+    // Auto-fetch real live token for user_1 using configured App Secret
+    fetch('/api/nexconn/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: 'user_1', name: 'User 1' }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.result?.accessToken) {
+          setDemoToken(data.result.accessToken);
+        }
+      })
+      .catch((e) => console.log('Notice fetching token:', e));
+
     return unsub;
   }, []);
 

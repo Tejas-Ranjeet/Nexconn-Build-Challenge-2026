@@ -30,8 +30,8 @@ export const NexconnProofModal: React.FC<NexconnProofModalProps> = ({
 }) => {
   const [customKey, setCustomKey] = useState(
     typeof window !== 'undefined'
-      ? localStorage.getItem('nexconn_app_key') || process.env.NEXT_PUBLIC_NEXCONN_APP_KEY || ''
-      : ''
+      ? localStorage.getItem('nexconn_app_key') || process.env.NEXT_PUBLIC_NEXCONN_APP_KEY || 'z3v5yqkbzet40'
+      : 'z3v5yqkbzet40'
   );
   const [reconnecting, setReconnecting] = useState(false);
 

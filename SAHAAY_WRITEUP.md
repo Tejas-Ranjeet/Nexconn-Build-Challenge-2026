@@ -4,7 +4,8 @@
 **Track:** Nexconn Chat SDK / Chat UI  
 **Team Name:** Lucario Wizards  
 **Submission Deadline:** November 22, 2026, 11:59 PM IST  
-**Configured App Key:** Injected via `NEXT_PUBLIC_NEXCONN_APP_KEY`
+**Configured App Key:** `z3v5yqkbzet40` (Data Center: Singapore)  
+**Application Name:** Sahaay (Activated)
 
 ---
 
