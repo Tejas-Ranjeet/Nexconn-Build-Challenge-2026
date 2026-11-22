@@ -6,7 +6,7 @@ import { ChannelSidebar } from '../components/ChannelSidebar';
 import { ChatArea } from '../components/ChatArea';
 import { SOSModal } from '../components/SOSModal';
 import { NexconnProofModal } from '../components/NexconnProofModal';
-import { SubmissionHelper } from '../components/SubmissionHelper';
+import { ProfileModal } from '../components/ProfileModal';
 import {
   UserProfile,
   SahaayChannel,
@@ -15,7 +15,6 @@ import {
 } from '../types/chat';
 import { PRESET_USERS, SAHAAY_CHANNELS } from '../data/mockData';
 import { nexconnService, NexconnConnectionStatus } from '../services/nexconnService';
-import { AlertTriangle } from 'lucide-react';
 
 export default function Home() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(PRESET_USERS[0]);
@@ -23,7 +22,7 @@ export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState<NexconnConnectionStatus>('CONNECTING');
   const [isSOSOpen, setIsSOSOpen] = useState(false);
   const [isProofOpen, setIsProofOpen] = useState(false);
-  const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [accessibility, setAccessibility] = useState<AccessibilitySettings>({
     fontSize: 'normal',
@@ -33,7 +32,7 @@ export default function Home() {
     speechToTextEnabled: true,
   });
 
-  // Check URL query parameters for user selection (supports multi-window live testing)
+  // Check URL query parameters or localStorage for user identity
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -43,6 +42,21 @@ export default function Home() {
         if (found) {
           setCurrentUser(found);
           nexconnService.connectUser(found.userId, found.name);
+          return;
+        }
+      }
+
+      // Check if custom profile was saved previously
+      const saved = localStorage.getItem('sahaay_custom_user');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.userId) {
+            setCurrentUser(parsed);
+            nexconnService.connectUser(parsed.userId, parsed.name);
+          }
+        } catch (e) {
+          console.warn('Failed to parse saved user:', e);
         }
       }
     }
@@ -74,20 +88,25 @@ export default function Home() {
     await nexconnService.connectUser(user.userId, user.name);
   };
 
+  const handleSaveProfile = async (profile: UserProfile) => {
+    setCurrentUser(profile);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sahaay_custom_user', JSON.stringify(profile));
+    }
+    await nexconnService.connectUser(profile.userId, profile.name);
+  };
+
   const handleUpdateAccessibility = (settings: Partial<AccessibilitySettings>) => {
     setAccessibility((prev) => ({ ...prev, ...settings }));
   };
 
   const handleBroadcastSOS = async (sosMessage: ChatMessage) => {
-    // 1. Send live emergency message through Nexconn Chat SDK to sahaay_emergency group
     await nexconnService.sendTextMessage(
       'sahaay_emergency',
       sosMessage.content,
       true,
       currentUser
     );
-
-    // 2. Switch to Emergency channel immediately so user sees the posted SOS
     setActiveChannel(SAHAAY_CHANNELS[0]);
   };
 
@@ -102,7 +121,7 @@ export default function Home() {
         onUpdateAccessibility={handleUpdateAccessibility}
         onOpenSOS={() => setIsSOSOpen(true)}
         onOpenProof={() => setIsProofOpen(true)}
-        onOpenSubmission={() => setIsSubmissionOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
       />
 
       {/* Main Workspace: Sidebar & Chat Interface */}
@@ -138,10 +157,11 @@ export default function Home() {
         accessibility={accessibility}
       />
 
-      <SubmissionHelper
-        isOpen={isSubmissionOpen}
-        onClose={() => setIsSubmissionOpen(false)}
-        accessibility={accessibility}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        currentUser={currentUser}
+        onSaveProfile={handleSaveProfile}
       />
     </div>
   );
