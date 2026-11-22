@@ -33,6 +33,21 @@ export default function Home() {
     speechToTextEnabled: true,
   });
 
+  // Check URL query parameters for user selection (supports multi-window live testing)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const userParam = params.get('user');
+      if (userParam) {
+        const found = PRESET_USERS.find((u) => u.userId === userParam);
+        if (found) {
+          setCurrentUser(found);
+          nexconnService.connectUser(found.userId, found.name);
+        }
+      }
+    }
+  }, []);
+
   // Initialize Nexconn on client mount
   useEffect(() => {
     let unsubscribeStatus: (() => void) | undefined;
@@ -51,9 +66,9 @@ export default function Home() {
     return () => {
       if (unsubscribeStatus) unsubscribeStatus();
     };
-  }, []);
+  }, [currentUser.userId]);
 
-  // When user switches role in header, reconnect
+  // When user switches role in header, reconnect with fresh server token
   const handleSelectUser = async (user: UserProfile) => {
     setCurrentUser(user);
     await nexconnService.connectUser(user.userId, user.name);
@@ -63,8 +78,16 @@ export default function Home() {
     setAccessibility((prev) => ({ ...prev, ...settings }));
   };
 
-  const handleBroadcastSOS = (sosMessage: ChatMessage) => {
-    // Switch to Emergency channel immediately so user sees the posted SOS
+  const handleBroadcastSOS = async (sosMessage: ChatMessage) => {
+    // 1. Send live emergency message through Nexconn Chat SDK to sahaay_emergency group
+    await nexconnService.sendTextMessage(
+      'sahaay_emergency',
+      sosMessage.content,
+      true,
+      currentUser
+    );
+
+    // 2. Switch to Emergency channel immediately so user sees the posted SOS
     setActiveChannel(SAHAAY_CHANNELS[0]);
   };
 
