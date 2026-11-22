@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: sahaay-nexconn-chat
+    env: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_NEXCONN_APP_KEY
+        value: z3v5yqkbzet40
+      - key: NEXCONN_APP_SECRET
+        sync: false
+      - key: NEXCONN_BASE_URL
+        value: https://api.sg-light-api.com
