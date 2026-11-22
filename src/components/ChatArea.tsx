@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Users,
   MapPin,
+  Trash2,
 } from 'lucide-react';
 
 interface ChatAreaProps {
@@ -225,6 +226,18 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              nexconnService.clearChannelHistory(channel.id);
+              setMessages([]);
+            }}
+            className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors"
+            title="Clear all messages in this channel"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-slate-400" />
+            <span className="hidden sm:inline">Clear Chat</span>
+          </button>
+
           <button
             onClick={handleOpenSecondWindow}
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors"

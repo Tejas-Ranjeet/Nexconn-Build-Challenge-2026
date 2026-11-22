@@ -149,6 +149,37 @@ class NexconnService {
     this.messageListeners.forEach((l) => l(channelId, updated));
   }
 
+  public clearChannelHistory(channelId: string) {
+    this.channelMessages.set(channelId, []);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(`sahaay_chat_${channelId}`);
+      } catch (err) {
+        console.warn('LocalStorage remove failed:', err);
+      }
+    }
+    this.messageListeners.forEach((l) => l(channelId, []));
+  }
+
+  public clearAllHistory() {
+    this.channelMessages.clear();
+    if (typeof window !== 'undefined') {
+      try {
+        const toDelete: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sahaay_chat_')) {
+            toDelete.push(key);
+          }
+        }
+        toDelete.forEach((k) => localStorage.removeItem(k));
+      } catch (err) {
+        console.warn('LocalStorage clear failed:', err);
+      }
+    }
+    this.messageListeners.forEach((l) => l('', []));
+  }
+
   public getChannelMessages(channelId: string): ChatMessage[] {
     if (this.channelMessages.has(channelId)) {
       return this.channelMessages.get(channelId)!;
