@@ -26,25 +26,32 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_number(self, page_count):
         self.saveState()
+
+        # Enclose the page/text with a crisp, professional black border
+        self.setStrokeColor(colors.black)
+        self.setLineWidth(1.2)
+        # Page size: 612 x 792. Enclosing border with clean 24pt margins:
+        self.rect(24, 18, 564, 756)
+
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor("#64748b"))
         
         # Header (Pages 2+)
         if self._pageNumber > 1:
-            self.drawString(40, 755, "Sahaay — Nexconn Build Challenge 2026 Project Write-Up")
-            self.setStrokeColor(colors.HexColor("#e2e8f0"))
+            self.drawString(40, 754, "Sahaay — Nexconn Build Challenge 2026 Project Write-Up")
+            self.setStrokeColor(colors.HexColor("#cbd5e1"))
             self.setLineWidth(0.5)
-            self.line(40, 748, 572, 748)
+            self.line(40, 747, 572, 747)
             
         # Footer (All pages)
-        self.setStrokeColor(colors.HexColor("#e2e8f0"))
+        self.setStrokeColor(colors.HexColor("#cbd5e1"))
         self.setLineWidth(0.5)
-        self.line(40, 42, 572, 42)
+        self.line(40, 44, 572, 44)
         
         footer_text = "Sahaay · Built for Nexconn Challenge 2026 · Team Lucario Wizards · App Key: z3v5yqkbzet40"
-        self.drawString(40, 30, footer_text)
+        self.drawString(40, 31, footer_text)
         page_str = f"Page {self._pageNumber} of {page_count}"
-        self.drawRightString(572, 30, page_str)
+        self.drawRightString(572, 31, page_str)
         self.restoreState()
 
 def create_writeup_pdf(output_path):
@@ -131,19 +138,28 @@ def create_writeup_pdf(output_path):
     meta_val = ParagraphStyle(
         'MetaVal',
         parent=styles['Normal'],
-        fontName='Courier',
-        fontSize=8,
-        leading=10.5,
+        fontName='Helvetica',
+        fontSize=7.5,
+        leading=10,
         textColor=colors.HexColor("#0f172a")
     )
 
     meta_val_blue = ParagraphStyle(
         'MetaValBlue',
         parent=styles['Normal'],
-        fontName='Courier-Bold',
-        fontSize=8.5,
+        fontName='Helvetica-Bold',
+        fontSize=8,
         leading=10.5,
         textColor=colors.HexColor("#1d4ed8")
+    )
+
+    meta_val_code = ParagraphStyle(
+        'MetaValCode',
+        parent=styles['Normal'],
+        fontName='Courier',
+        fontSize=7.5,
+        leading=9.5,
+        textColor=colors.HexColor("#0f172a")
     )
 
     table_cell = ParagraphStyle(
@@ -199,7 +215,7 @@ def create_writeup_pdf(output_path):
         ]
     ]
 
-    t_meta = Table(meta_data, colWidths=[85, 185, 80, 182])
+    t_meta = Table(meta_data, colWidths=[74, 184, 66, 208])
     t_meta.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f8fafc")),
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#cbd5e1")),
@@ -395,7 +411,7 @@ def create_writeup_pdf(output_path):
         ]
     ]
 
-    t_comp = Table(compliance_data, colWidths=[120, 190, 222])
+    t_comp = Table(compliance_data, colWidths=[105, 215, 212])
     t_comp.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f1f5f9")),
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#cbd5e1")),
